@@ -1,0 +1,18 @@
+[
+  {
+    "modid": "robustimc",
+    "name": "RobustIMC",
+    "description": "Allow modpack creator to use FML's Inter-Mod Communication system.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url" : "",
+    "updateUrl": "",
+    "authorList": ["3TUSK"],
+    "credits": "FML, for the IMC system",
+    "logoFile": "",
+    "screenshots": [],
+    "parent": "",
+    "requiredMods": [],
+    "dependencies": []
+  }
+]
