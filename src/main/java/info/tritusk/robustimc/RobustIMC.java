@@ -15,8 +15,8 @@
  */
 package info.tritusk.robustimc;
 
+import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLInterModComms;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraft.item.ItemStack;
@@ -24,32 +24,32 @@ import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Locale;
 
 @Mod(modid = "robustimc", name = "RobustIMC", version = "@VERSION", useMetadata = true)
-public class RobustIMC {
+public enum RobustIMC {
 
-    private static File jsonFile = null;
-    private static Logger log;
+    INSTANCE;
+
+    @Mod.InstanceFactory
+    public static RobustIMC getInstance() {
+        return INSTANCE;
+    }
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        log = event.getModLog();
-        jsonFile = new File(event.getModConfigurationDirectory(), "robustimc.json");
-    }
-    @Mod.EventHandler
-    public void init(FMLInitializationEvent event) {
-        if (jsonFile == null || !jsonFile.exists() || !jsonFile.isFile()) {
+        File jsonFile = new File(event.getModConfigurationDirectory(), "robustimc.json");
+        if (!jsonFile.exists() || !jsonFile.isFile()) {
             return;
         }
 
-        try {
-            NBTBase base = JsonToNBT.func_150315_a(IOUtils.toString(new FileInputStream(jsonFile), "UTF-8"));
+        try (FileInputStream json = new FileInputStream(jsonFile)) {
+            NBTBase base = JsonToNBT.func_150315_a(IOUtils.toString(json, Charsets.UTF_8));
             if (base instanceof NBTTagList) {
                 NBTTagList theTag = (NBTTagList) base;
                 for (int index = 0; index < theTag.tagCount(); index++) {
@@ -71,19 +71,16 @@ public class RobustIMC {
                             break;
                         }
                         default: {
-                            log.error("Yes, you have unsupported message type! Double check your json first!");
+                            FMLLog.warning("[RobustIMC] Yes, one of your input message type is invalid! Double check your json first!");
                             break;
                         }
                     }
                 }
             } else {
-                log.error("Well, you should know that you need an array of messages...");
+                FMLLog.severe("[RobustIMC] Well, you should know that you need an array of messages...");
             }
-        } catch (Exception e) {
-            log.warn("RobustIMC encountered with error while resolving IMC message. It will stop being functional.");
-            log.catching(e);
+        } catch (Throwable t) {
+            FMLLog.getLogger().error("[RobustIMC] RobustIMC encountered with error while resolving IMC message. It will stop being functional.", t);
         }
-        jsonFile = null;
-        log = null;
     }
 }
