@@ -15,15 +15,14 @@
  */
 package info.tritusk.robustimc;
 
-import cpw.mods.fml.common.FMLLog;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.event.FMLInterModComms;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInterModComms;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
@@ -49,36 +48,40 @@ public enum RobustIMC {
         }
 
         try (FileInputStream json = new FileInputStream(jsonFile)) {
-            NBTBase base = JsonToNBT.func_150315_a(IOUtils.toString(json, Charsets.UTF_8));
-            if (base instanceof NBTTagList) {
-                NBTTagList theTag = (NBTTagList) base;
-                for (int index = 0; index < theTag.tagCount(); index++) {
-                    NBTTagCompound tag = theTag.getCompoundTagAt(index);
-                    final String receiverMod = tag.getString("modid");
-                    final String messageKey = tag.getString("key");
-                    switch (tag.getString("type").toLowerCase(Locale.ENGLISH)) {
-                        case("string"): {
-                            FMLInterModComms.sendMessage(receiverMod, messageKey, tag.getString("message"));
-                            break;
-                        }
-                        case("nbt"): {
-                            FMLInterModComms.sendMessage(receiverMod, messageKey, tag.getCompoundTag("message"));
-                            break;
-                        }
-                        case("stack"):
-                        case("itemstack"): {
-                            FMLInterModComms.sendMessage(receiverMod, messageKey, ItemStack.loadItemStackFromNBT(tag.getCompoundTag("message")));
-                            break;
-                        }
-                        default: {
-                            FMLLog.warning("[RobustIMC] Yes, one of your input message type is invalid! Double check your json first!");
-                            break;
-                        }
+            NBTTagCompound tag = JsonToNBT.getTagFromJson(IOUtils.toString(json, Charsets.UTF_8));
+            tag.getKeySet().forEach(key -> {
+                NBTTagCompound message = tag.getCompoundTag(key);
+                if (message.getSize() == 0) {
+                    FMLLog.warning("[RobustIMC] Empty or invalid message detected! Message name: " + key);
+                    return;
+                }
+                final String receiverMod = message.getString("modid");
+                final String messageKey = message.getString("key");
+                switch (message.getString("type").toLowerCase(Locale.ENGLISH)) {
+                    case ("string"): {
+                        FMLInterModComms.sendMessage(receiverMod, messageKey, message.getString("message"));
+                        break;
+                    }
+                    case ("nbt"): {
+                        FMLInterModComms.sendMessage(receiverMod, messageKey, message.getCompoundTag("message"));
+                        break;
+                    }
+                    case ("item"):
+                    case ("stack"):
+                    case ("itemstack"): {
+                        FMLInterModComms.sendMessage(receiverMod, messageKey, ItemStack.loadItemStackFromNBT(message.getCompoundTag("message")));
+                        break;
+                    }
+                    case ("rs"):
+                    case ("resourcelocation"): {
+                        FMLInterModComms.sendMessage(receiverMod, messageKey, new ResourceLocation(message.getString("domain"), message.getString("path")));
+                    }
+                    default: {
+                        FMLLog.warning("[RobustIMC] Yes, one of your input message type is invalid! Double check your json first!");
+                        break;
                     }
                 }
-            } else {
-                FMLLog.severe("[RobustIMC] Well, you should know that you need an array of messages...");
-            }
+            });
         } catch (Throwable t) {
             FMLLog.getLogger().error("[RobustIMC] RobustIMC encountered with error while resolving IMC message. It will stop being functional.", t);
         }

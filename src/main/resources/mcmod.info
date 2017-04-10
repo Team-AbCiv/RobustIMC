@@ -8,11 +8,6 @@
     "url" : "",
     "updateUrl": "",
     "authorList": ["3TUSK"],
-    "credits": "FML, for the IMC system",
-    "logoFile": "",
-    "screenshots": [],
-    "parent": "",
-    "requiredMods": [],
-    "dependencies": []
+    "credits": "FML, for the IMC system"
   }
 ]
