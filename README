@@ -1,0 +1,32 @@
+RobustIMC
+------------
+
+Write "json", send IMC message, and enjoy the benefit from IMC!
+
+
+Technical details
+
+1. The entry point is %gameDir%/config/robustimc.json
+   where %gameDir% is your main game directory
+2. Even though it says json format above, there is still a
+   significant difference; that said, this file shall not
+   use quotation mark to enclose all key, e.g.:
+
+   ````
+   {
+     example_object: {
+       string: "I am string",
+       number: 42,
+       array: ["I", "am", "string", "array"],
+       boolean: true,
+       float_point: 233.33
+     }
+   }
+   ````
+
+   This is due to how Minecraft works. If you are familiar
+   with command block stuff, you will recognize this format
+   very quickly.
+3. The exact meaning of message depends on actual implementation
+   entirely. Please ask mod dev if your message is successfully
+   sent but not functional.

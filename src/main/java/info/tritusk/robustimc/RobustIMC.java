@@ -15,7 +15,6 @@
  */
 package info.tritusk.robustimc;
 
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInterModComms;
@@ -23,6 +22,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
@@ -30,7 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Locale;
 
-@Mod(modid = "robustimc", name = "RobustIMC", version = "@VERSION", useMetadata = true)
+@Mod(modid = "robustimc", name = "RobustIMC", version = "@VERSION@", useMetadata = true)
 public enum RobustIMC {
 
     INSTANCE;
@@ -57,6 +57,10 @@ public enum RobustIMC {
                 }
                 final String receiverMod = message.getString("modid");
                 final String messageKey = message.getString("key");
+                if (receiverMod.isEmpty() || messageKey.isEmpty()) {
+                    FMLLog.warning("[RobustIMC] Either receiver or message key is invalid, this is not allowed! Message name: " + key);
+                    return;
+                }
                 switch (message.getString("type").toLowerCase(Locale.ENGLISH)) {
                     case ("string"): {
                         FMLInterModComms.sendMessage(receiverMod, messageKey, message.getString("message"));
@@ -75,6 +79,7 @@ public enum RobustIMC {
                     case ("rs"):
                     case ("resourcelocation"): {
                         FMLInterModComms.sendMessage(receiverMod, messageKey, new ResourceLocation(message.getString("domain"), message.getString("path")));
+                        break;
                     }
                     default: {
                         FMLLog.warning("[RobustIMC] Yes, one of your input message type is invalid! Double check your json first!");
