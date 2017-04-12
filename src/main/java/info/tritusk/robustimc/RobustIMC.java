@@ -52,13 +52,13 @@ public enum RobustIMC {
             tag.getKeySet().forEach(key -> {
                 NBTTagCompound message = tag.getCompoundTag(key);
                 if (message.getSize() == 0) {
-                    FMLLog.warning("[RobustIMC] Empty or invalid message detected! Message name: " + key);
+                    FMLLog.warning("[RobustIMC] Message \"{}\" is either empty or invalid! This is user's error!", key);
                     return;
                 }
                 final String receiverMod = message.getString("modid");
                 final String messageKey = message.getString("key");
                 if (receiverMod.isEmpty() || messageKey.isEmpty()) {
-                    FMLLog.warning("[RobustIMC] Either receiver or message key is invalid, this is not allowed! Message name: " + key);
+                    FMLLog.warning("[RobustIMC] Message \"{}\" has invalid receiver or message key! This is user's error!", key);
                     return;
                 }
                 switch (message.getString("type").toLowerCase(Locale.ENGLISH)) {
@@ -78,11 +78,12 @@ public enum RobustIMC {
                     }
                     case ("rs"):
                     case ("resourcelocation"): {
-                        FMLInterModComms.sendMessage(receiverMod, messageKey, new ResourceLocation(message.getString("domain"), message.getString("path")));
+                        NBTTagCompound content = message.getCompoundTag("message");
+                        FMLInterModComms.sendMessage(receiverMod, messageKey, new ResourceLocation(content.getString("domain"), content.getString("path")));
                         break;
                     }
                     default: {
-                        FMLLog.warning("[RobustIMC] Yes, one of your input message type is invalid! Double check your json first!");
+                        FMLLog.warning("[RobustIMC] Message \"{}\" has invalid message type! This is user's error!", key);
                         break;
                     }
                 }

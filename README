@@ -7,7 +7,7 @@ Write "json", send IMC message, and enjoy the benefit from IMC!
 Technical details
 
 1. The entry point is %gameDir%/config/robustimc.json
-   where %gameDir% is your main game directory
+   where %gameDir% is your main game directory.
 2. Even though it says json format above, there is still a
    significant difference; that said, this file shall not
    use quotation mark to enclose all key, e.g.:
@@ -24,9 +24,72 @@ Technical details
    }
    ````
 
+   Or in short, this is a lenient json format, where `name`
+   are not in quotation marks pair.
+
    This is due to how Minecraft works. If you are familiar
    with command block stuff, you will recognize this format
    very quickly.
-3. The exact meaning of message depends on actual implementation
-   entirely. Please ask mod dev if your message is successfully
-   sent but not functional.
+3. The overall layout of the lenient json file looks like:
+
+   ````
+   {
+     message_id: {
+       modid: "example_mod",
+       key: "example_key",
+       type: "nbt",
+       message: {
+         example_object: {
+           string: "I am string",
+           number: 42,
+           array: ["I", "am", "string", "array"],
+           boolean: true,
+           float_point: 233.33
+         }
+       }
+     }
+   }
+   ````
+
+   Explanation:
+      - message_id: This is just a placeholder and will affect
+        nothing; while it's still useful if the message has
+        encountered with error
+      - modid: The ModID of which mod to which you want to send
+        the IMC message. Example: if it's "forestry", then
+        Forestry will receive your message.
+      - key: The message key. The exact definition and usage of
+        keys entirely depend on actual implementation on each mods.
+        Look up their IMC message documentation first before
+        inquiry dev of those mods.
+      - type: The message type. Four types of message are
+        currently support, case insensitive:
+          - string
+          - item, stack, itemstack
+          - nbt
+          - rs, resourcelocation
+      - message: The actual message content. Specification is
+        given as follow:
+          - string
+            The `message` will have a json `string` as its value.
+          - item, stack, itemstack
+            The `message` will have a json `object` as its value.
+            It shall have at least two following name/value pairs,
+            case sensitive:
+              - id: the item id. Either numerical id or
+                namespace is allowed.
+              - Count: the count of the given item stack
+            Optionally, the following pair(s) is allowed:
+              - tag: the NBT tag attached to the item stack. If
+                absent, then the item stack will have `null` tag.
+          - nbt
+            The `message` will have a json `object` as its value.
+            It may contain anything.
+          - rs, resourcelocation
+            The `message` will have a json `object` that consists
+            with two name/value pairs:
+              - domain: The resource location domain
+              - path: The resource location path
+        The exact meaning of message depends on actual implementation
+        entirely. Please ask mod dev if your message is successfully
+        sent but not functional.
