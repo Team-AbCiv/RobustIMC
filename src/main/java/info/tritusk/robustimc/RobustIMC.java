@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 3TUSK, et al.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,53 +15,55 @@
  */
 package info.tritusk.robustimc;
 
-import net.minecraftforge.fml.common.FMLLog;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInterModComms;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
-import org.apache.commons.io.Charsets;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInterModComms;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-@Mod(modid = "robustimc", name = "RobustIMC", version = "@VERSION@", useMetadata = true)
-public enum RobustIMC {
-
-    INSTANCE;
-
-    @Mod.InstanceFactory
-    public static RobustIMC getInstance() {
-        return INSTANCE;
-    }
+@Mod(modid = "robustimc", name = "RobustIMC", version = "@VERSION@", useMetadata = true,
+    acceptedMinecraftVersions = "[1.11,)", acceptableRemoteVersions = "*")
+public final class RobustIMC {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        File jsonFile = new File(event.getModConfigurationDirectory(), "robustimc.json");
-        if (!jsonFile.exists() || !jsonFile.isFile()) {
-            return;
+        final boolean debug = Boolean.parseBoolean(System.getProperty("robustimc.debug", "false"));
+        Logger log;
+        if (debug) {
+            log = event.getModLog();
+        } else {
+            log = null;
         }
-
-        try (FileInputStream json = new FileInputStream(jsonFile)) {
-            NBTTagCompound tag = JsonToNBT.getTagFromJson(IOUtils.toString(json, Charsets.UTF_8));
+        try (FileInputStream json = FileUtils.openInputStream(new File(event.getModConfigurationDirectory(), "robustimc.json"))) {
+            NBTTagCompound tag = JsonToNBT.getTagFromJson(IOUtils.toString(json, StandardCharsets.UTF_8));
             tag.getKeySet().forEach(key -> {
                 NBTTagCompound message = tag.getCompoundTag(key);
                 if (message.getSize() == 0) {
-                    FMLLog.warning("[RobustIMC] Message \"{}\" is either empty or invalid! This is user's error!", key);
+                    if (debug) {
+                        log.warn("Message '{}' is either empty or invalid! It will be ignored", key);
+                    }
                     return;
                 }
                 final String receiverMod = message.getString("modid");
                 final String messageKey = message.getString("key");
                 if (receiverMod.isEmpty() || messageKey.isEmpty()) {
-                    FMLLog.warning("[RobustIMC] Message \"{}\" has invalid receiver or message key! This is user's error!", key);
+                    if (debug) {
+                        log.warn("Message '{}' has either empty receiver or empty message key! It will be ignored.", key);
+                    }
                     return;
                 }
-                switch (message.getString("type").toLowerCase(Locale.ENGLISH)) {
+                String messageType = message.getString("type").toLowerCase(Locale.ENGLISH);
+                switch (messageType) {
                     case ("string"): {
                         FMLInterModComms.sendMessage(receiverMod, messageKey, message.getString("message"));
                         break;
@@ -73,7 +75,7 @@ public enum RobustIMC {
                     case ("item"):
                     case ("stack"):
                     case ("itemstack"): {
-                        FMLInterModComms.sendMessage(receiverMod, messageKey, ItemStack.loadItemStackFromNBT(message.getCompoundTag("message")));
+                        FMLInterModComms.sendMessage(receiverMod, messageKey, new ItemStack(message.getCompoundTag("message")));
                         break;
                     }
                     case ("rs"):
@@ -83,13 +85,17 @@ public enum RobustIMC {
                         break;
                     }
                     default: {
-                        FMLLog.warning("[RobustIMC] Message \"{}\" has invalid message type! This is user's error!", key);
+                        if (debug) {
+                            log.warn("Message '{}' has invalid message type '{}'! It will be ignored.", key, messageType);
+                        }
                         break;
                     }
                 }
             });
-        } catch (Throwable t) {
-            FMLLog.getLogger().error("[RobustIMC] RobustIMC encountered with error while resolving IMC message. It will stop being functional.", t);
+        } catch (Exception e) {
+            if (debug) {
+                log.error("RobustIMC encountered with error while resolving IMC message. It will stop being functional.", e);
+            }
         }
     }
 }
