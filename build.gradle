@@ -13,17 +13,17 @@ buildscript {
 
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "0.0.0"
+version = "1.0.1"
 group = "info.tritusk"
 archivesBaseName = "RobustIMC"
 
 sourceCompatibility = targetCompatibility = 1.8
 
 minecraft {
-    version = "1.12.1-14.22.0.2465"
+    version = "1.12.2-14.23.0.2501"
     runDir = "run"
 
-    mappings = "snapshot_20170830"
+    mappings = "snapshot_20171003"
 
     replace "@VERSION@", project.version
 }

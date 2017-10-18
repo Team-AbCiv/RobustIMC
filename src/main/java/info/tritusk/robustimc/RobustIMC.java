@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 @Mod(modid = "robustimc", name = "RobustIMC", version = "@VERSION@", useMetadata = true,
-    acceptedMinecraftVersions = "[1.11,)", acceptableRemoteVersions = "*")
+    acceptedMinecraftVersions = "[1.10.2,)", acceptableRemoteVersions = "*")
 public final class RobustIMC {
 
     @Mod.EventHandler
